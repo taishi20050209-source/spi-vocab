@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1a1a">
+<title>SPI単語帳</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;700;900&family=Shippori+Mincho:wght@400;500;700&display=swap');
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :root {
+    --bg: #f4ede4;
+    --paper: #faf6ef;
+    --ink: #1a1a1a;
+    --ink-soft: #4a4a4a;
+    --accent: #b91c2c;
+    --accent-soft: #d4a3a8;
+    --gold: #c9a961;
+    --line: #d4cab8;
+    --learned: #5a7a5a;
+    --hard: #b91c2c;
+    --part1-color: #2c5f7a;
+    --part2-color: #7a4a2c;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  body {
+    font-family: 'Shippori Mincho', 'Noto Serif JP', serif;
+    background: var(--bg);
+    color: var(--ink);
+    user-select: none;
+    -webkit-user-select: none;
+    position: fixed;
+    width: 100%;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(201, 169, 97, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(185, 28, 44, 0.05) 0%, transparent 50%);
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* ============================================
+     Part選択画面
+  ============================================ */
+  .part-select {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 40px 24px;
+    overflow-y: auto;
+  }
+
+  .part-select.hidden { display: none; }
+
+  .ps-header {
+    text-align: center;
+    margin-bottom: 36px;
+    padding-top: 20px;
+  }
+
+  .ps-title {
+    font-family: 'Noto Serif JP', serif;
+    font-weight: 900;
+    font-size: 32px;
+    letter-spacing: 0.2em;
+    color: var(--ink);
+    margin-bottom: 10px;
+    position: relative;
+    display: inline-block;
+  }
+
+  .ps-title::before, .ps-title::after {
+    content: '◆';
+    color: var(--accent);
+    font-size: 12px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .ps-title::before { left: -24px; }
+  .ps-title::after { right: -24px; }
+
+  .ps-subtitle {
+    font-size: 12px;
+    color: var(--ink-soft);
+    letter-spacing: 0.3em;
+    font-weight: 500;
+  }
+
+  .ps-divider {
+    width: 60px;
+    height: 1px;
+    background: var(--gold);
+    margin: 20px auto;
+    opacity: 0.6;
+  }
+
+  .ps-instruction {
+    font-size: 13px;
+    color: var(--ink-soft);
+    text-align: center;
+    margin-bottom: 28px;
+    letter-spacing: 0.1em;
+    line-height: 1.7;
+  }
+
+  .part-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .part-card {
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    padding: 24px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    text-align: left;
+    width: 100%;
+    font-family: inherit;
+  }
+
+  .part-card::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+  .part-card:active {
+    transform: scale(0.98);
+  }
+
+  .pc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+
+  .pc-label {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .pc-count {
+    font-size: 11px;
+    color: var(--ink-soft);
+    letter-spacing: 0.1em;
+    font-weight: 500;
+  }
+
+  .pc-title {
+    font-family: 'Noto Serif JP', serif;
+    font-weight: 900;
+    font-size: 22px;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+
+  .pc-desc {
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    margin-bottom: 14px;
+  }
+
+  .pc-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+  }
+
+  .pc-progress-bar {
+    flex: 1;
+    height: 3px;
+    background: var(--line);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .pc-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--accent));
+    transition: width 0.4s;
+  }
+
+  .pc-progress-text {
+    color: var(--ink-soft);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    min-width: 80px;
+    text-align: right;
+  }
+
+  .pc-progress-text .num { color: var(--ink); }
+
+  .ps-stats {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-top: auto;
+  }
+
+  .ps-stats-title {
+    font-size: 10px;
+    color: var(--ink-soft);
+    letter-spacing: 0.3em;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  .ps-stats-row {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+  }
+
+  .ps-stat-item .num {
+    font-size: 22px;
+    font-weight: 900;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .ps-stat-item .num.learned { color: var(--learned); }
+  .ps-stat-item .num.hard { color: var(--hard); }
+
+  .ps-stat-item .label {
+    font-size: 10px;
+    color: var(--ink-soft);
+    letter-spacing: 0.2em;
+    font-weight: 700;
+  }
+
+  /* ============================================
+     学習画面
+  ============================================ */
+  .study-screen {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .study-screen.hidden { display: none; }
+
+  /* ヘッダー */
+  header {
+    padding: 14px 20px 12px;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+    position: relative;
+  }
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .back-btn {
+    background: none;
+    border: 1px solid var(--line);
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    color: var(--ink);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .back-btn:active {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .title {
+    font-family: 'Noto Serif JP', serif;
+    font-weight: 900;
+    font-size: 15px;
+    letter-spacing: 0.15em;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .title-mark {
+    color: var(--accent);
+    font-size: 9px;
+  }
+
+  .mode-switcher {
+    display: flex;
+    gap: 4px;
+    background: var(--bg);
+    padding: 3px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+  }
+
+  .mode-btn {
+    background: none;
+    border: none;
+    padding: 6px 12px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .mode-btn.active {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    margin-top: 10px;
+  }
+
+  .progress-info {
+    display: flex;
+    gap: 14px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    letter-spacing: 0.05em;
+    margin-top: 8px;
+  }
+
+  .progress-info .label {
+    opacity: 0.7;
+  }
+
+  .progress-info .num {
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .progress-info .num.learned { color: var(--learned); }
+  .progress-info .num.hard { color: var(--hard); }
+
+  .progress-bar {
+    flex: 1;
+    height: 3px;
+    background: var(--line);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--accent));
+    width: 0%;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* メインカード */
+  main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-stack {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    height: 100%;
+    max-height: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: var(--paper);
+    border-radius: 4px;
+    box-shadow:
+      0 1px 0 rgba(0,0,0,0.03),
+      0 4px 12px rgba(0,0,0,0.08),
+      0 20px 40px rgba(0,0,0,0.06);
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+  .card.exit-left {
+    transform: translateX(-120%) rotate(-8deg);
+    opacity: 0;
+  }
+
+  .card.exit-right {
+    transform: translateX(120%) rotate(8deg);
+    opacity: 0;
+  }
+
+  .card.enter {
+    animation: cardEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes cardEnter {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .card-corner {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--ink-soft);
+    font-weight: 500;
+    z-index: 2;
+  }
+
+  .card-corner-right {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    font-weight: 700;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+  }
+
+  .status-dot.learned { background: var(--learned); }
+  .status-dot.hard { background: var(--hard); }
+
+  .card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 28px;
+    text-align: center;
+    position: relative;
+  }
+
+  .word {
+    font-family: 'Noto Serif JP', serif;
+    font-weight: 900;
+    font-size: clamp(34px, 8.5vw, 52px);
+    color: var(--ink);
+    letter-spacing: 0.05em;
+    line-height: 1.3;
+    margin-bottom: 14px;
+    word-break: keep-all;
+  }
+
+  .reading {
+    font-size: 14px;
+    color: var(--ink-soft);
+    letter-spacing: 0.15em;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .reading.show {
+    opacity: 1;
+  }
+
+  .tap-hint {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: var(--ink-soft);
+    letter-spacing: 0.2em;
+    opacity: 0.5;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.7; }
+  }
+
+  /* 意味表示 */
+  .meaning-section {
+    background: linear-gradient(180deg, transparent, rgba(212, 202, 184, 0.15));
+    border-top: 1px solid var(--line);
+    padding: 0 28px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), padding 0.5s;
+  }
+
+  .meaning-section.show {
+    max-height: 280px;
+    padding: 24px 28px 28px;
+  }
+
+  .meaning-label {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .meaning-label::before,
+  .meaning-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--accent-soft);
+    opacity: 0.5;
+  }
+
+  .meaning {
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  /* ボタン */
+  .controls {
+    padding: 14px 20px 22px;
+    background: var(--paper);
+    border-top: 1px solid var(--line);
+  }
+
+  .button-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .btn {
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    color: var(--ink);
+    padding: 14px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .btn-hard {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-hard:active {
+    background: var(--accent);
+    color: var(--paper);
+  }
+
+  .btn-learned {
+    border-color: var(--learned);
+    color: var(--learned);
+  }
+
+  .btn-learned:active {
+    background: var(--learned);
+    color: var(--paper);
+  }
+
+  .btn-icon {
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .btn-next {
+    width: 100%;
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+    padding: 16px;
+    font-size: 15px;
+  }
+
+  .btn-next:active {
+    background: var(--ink-soft);
+  }
+
+  .btn-next:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .btn-next .arrow {
+    margin-left: 8px;
+  }
+
+  /* 完了画面 */
+  .complete-screen {
+    position: absolute;
+    inset: 0;
+    background: var(--paper);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+    z-index: 100;
+  }
+
+  .complete-screen.show {
+    display: flex;
+    animation: fadeIn 0.4s;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .complete-mark {
+    font-size: 64px;
+    color: var(--gold);
+    margin-bottom: 16px;
+    font-weight: 900;
+  }
+
+  .complete-title {
+    font-size: 28px;
+    font-weight: 900;
+    margin-bottom: 12px;
+    letter-spacing: 0.1em;
+  }
+
+  .complete-subtitle {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin-bottom: 32px;
+    letter-spacing: 0.05em;
+    line-height: 1.7;
+  }
+
+  .complete-stats {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 32px;
+    padding: 20px 32px;
+    background: var(--bg);
+    border-radius: 4px;
+    border: 1px solid var(--line);
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 28px;
+    font-weight: 900;
+    margin-bottom: 4px;
+  }
+
+  .stat-num.learned { color: var(--learned); }
+  .stat-num.hard { color: var(--hard); }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--ink-soft);
+    letter-spacing: 0.2em;
+    font-weight: 700;
+  }
+
+  .complete-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  /* メニュー */
+  .menu-btn {
+    background: none;
+    border: 1px solid var(--line);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .menu-btn:active {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 200;
+  }
+
+  .menu-overlay.show {
+    display: flex;
+    animation: fadeIn 0.2s;
+  }
+
+  .menu-sheet {
+    background: var(--paper);
+    width: 100%;
+    max-width: 600px;
+    border-radius: 12px 12px 0 0;
+    padding: 24px 20px 32px;
+    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .menu-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--line);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  .menu-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    letter-spacing: 0.1em;
+  }
+
+  .menu-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .menu-item:last-of-type {
+    border-bottom: none;
+  }
+
+  .menu-item-danger {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .menu-close {
+    width: 100%;
+    background: var(--bg);
+    border: none;
+    padding: 14px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--ink);
+    border-radius: 4px;
+    margin-top: 16px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+  }
+
+  /* 装飾 */
+  .deco-corner {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border: 1.5px solid var(--gold);
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
+  .deco-tl { top: 14px; left: 14px; border-right: none; border-bottom: none; }
+  .deco-tr { top: 14px; right: 14px; border-left: none; border-bottom: none; }
+  .deco-bl { bottom: 14px; left: 14px; border-right: none; border-top: none; }
+  .deco-br { bottom: 14px; right: 14px; border-left: none; border-top: none; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============================================
+       Part選択画面
+  ============================================ -->
+  <div class="part-select" id="partSelect">
+    <div class="ps-header">
+      <h1 class="ps-title">SPI 語句帳</h1>
+      <div class="ps-divider"></div>
+      <p class="ps-subtitle">VOCABULARY MASTERY</p>
+    </div>
+
+    <p class="ps-instruction">学習する単元を選んでください</p>
+
+    <div class="part-cards">
+      <button class="part-card" data-part="1">
+        <div class="pc-header">
+          <span class="pc-label">PART  I</span>
+          <span class="pc-count" id="part1Count">120 語</span>
+        </div>
+        <div class="pc-title">頻出語句 [基礎編]</div>
+        <div class="pc-desc">SPI試験で頻繁に登場する熟語・慣用句を網羅</div>
+        <div class="pc-progress">
+          <div class="pc-progress-bar">
+            <div class="pc-progress-fill" id="part1Fill" style="width: 0%"></div>
+          </div>
+          <span class="pc-progress-text">覚えた <span class="num" id="part1Learned">0</span>/<span id="part1Total">120</span></span>
+        </div>
+      </button>
+
+      <button class="part-card" data-part="2">
+        <div class="pc-header">
+          <span class="pc-label">PART II</span>
+          <span class="pc-count" id="part2Count">92 語</span>
+        </div>
+        <div class="pc-title">頻出語句 [応用編]</div>
+        <div class="pc-desc">対義語・類義語を含む応用的な語句</div>
+        <div class="pc-progress">
+          <div class="pc-progress-bar">
+            <div class="pc-progress-fill" id="part2Fill" style="width: 0%"></div>
+          </div>
+          <span class="pc-progress-text">覚えた <span class="num" id="part2Learned">0</span>/<span id="part2Total">92</span></span>
+        </div>
+      </button>
+    </div>
+
+    <div class="ps-stats">
+      <div class="ps-stats-title">— 全体の学習状況 —</div>
+      <div class="ps-stats-row">
+        <div class="ps-stat-item">
+          <span class="num" id="totalAll">212</span>
+          <span class="label">総語句</span>
+        </div>
+        <div class="ps-stat-item">
+          <span class="num learned" id="totalLearned">0</span>
+          <span class="label">覚えた</span>
+        </div>
+        <div class="ps-stat-item">
+          <span class="num hard" id="totalHard">0</span>
+          <span class="label">苦手</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       学習画面
+  ============================================ -->
+  <div class="study-screen hidden" id="studyScreen">
+    <header>
+      <div class="header-top">
+        <button class="back-btn" id="backBtn" aria-label="戻る">‹</button>
+        <h1 class="title"><span class="title-mark">◆</span> <span id="studyTitle">PART I</span></h1>
+        <button class="menu-btn" id="menuBtn" aria-label="メニュー">⋯</button>
+      </div>
+
+      <div class="mode-switcher">
+        <button class="mode-btn active" data-mode="all">全て</button>
+        <button class="mode-btn" data-mode="hard">苦手</button>
+        <button class="mode-btn" data-mode="unlearned">未習</button>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+      <div class="progress-info">
+        <span><span class="label">進捗</span> <span class="num" id="currentNum">0</span> / <span id="totalNum">0</span></span>
+        <span><span class="label">覚えた</span> <span class="num learned" id="learnedNum">0</span></span>
+        <span><span class="label">苦手</span> <span class="num hard" id="hardNum">0</span></span>
+      </div>
+    </header>
+
+    <main>
+      <div class="card-stack" id="cardStack"></div>
+
+      <div class="complete-screen" id="completeScreen">
+        <div class="complete-mark">◆</div>
+        <h2 class="complete-title">完了</h2>
+        <p class="complete-subtitle">お疲れさまでした<br>本日の学習を達成しました</p>
+        <div class="complete-stats">
+          <div class="stat">
+            <div class="stat-num learned" id="finalLearned">0</div>
+            <div class="stat-label">覚えた</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num hard" id="finalHard">0</div>
+            <div class="stat-label">苦手</div>
+          </div>
+        </div>
+        <div class="complete-actions">
+          <button class="btn btn-next" id="restartBtn">もう一度</button>
+          <button class="btn" id="reviewHardBtn">苦手な語句を復習</button>
+          <button class="btn" id="backToSelectBtn">単元選択へ戻る</button>
+        </div>
+      </div>
+    </main>
+
+    <div class="controls">
+      <div class="button-row">
+        <button class="btn btn-hard" id="hardBtn">
+          <span class="btn-icon">×</span>もう一度
+        </button>
+        <button class="btn btn-learned" id="learnedBtn">
+          <span class="btn-icon">○</span>覚えた
+        </button>
+      </div>
+      <button class="btn btn-next" id="nextBtn">
+        次へ <span class="arrow">→</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- メニュー -->
+<div class="menu-overlay" id="menuOverlay">
+  <div class="menu-sheet">
+    <div class="menu-handle"></div>
+    <h3 class="menu-title">メニュー</h3>
+    <div class="menu-item" id="shuffleItem">
+      <span>順番をシャッフル</span><span>↻</span>
+    </div>
+    <div class="menu-item" id="resetProgressItem">
+      <span>この単元の進捗位置をリセット</span><span>○</span>
+    </div>
+    <div class="menu-item menu-item-danger" id="resetPartItem">
+      <span>この単元の記録をリセット</span><span>×</span>
+    </div>
+    <div class="menu-item menu-item-danger" id="resetAllItem">
+      <span>全単元の記録をリセット</span><span>×</span>
+    </div>
+    <button class="menu-close" id="menuCloseBtn">閉じる</button>
+  </div>
+</div>
+
+<script>
+// ========================================
+// データ
+// ========================================
+const PART1_WORDS = [
+{ word: "論う", reading: "あげつらう", meaning: "過去の失敗などを、いちいち取り上げて非難すること。" },
+  { word: "斡旋", reading: "あっせん", meaning: "間に入って双方をうまく取り持つこと。" },
+  { word: "軋轢", reading: "あつれき", meaning: "葛藤が生じること。仲が悪くなること。" },
+  { word: "亜流", reading: "ありゅう", meaning: "本流から派生したもので、本物には及ばないが、本物に追従するような形で存在していること。" },
+  { word: "委細", reading: "いさい", meaning: "細かく詳しいこと。詳しい事情。" },
+  { word: "いみじくも", reading: "いみじくも", meaning: "非常にうまく。適切に。" },
+  { word: "うつつ", reading: "うつつ", meaning: "この世に現に存在しているもの。また、夢とも現実ともはっきりしない状態。" },
+  { word: "営々", reading: "えいえい", meaning: "休むことなく、一生懸命働くさま。" },
+  { word: "英断", reading: "えいだん", meaning: "きっぱりと物事を決めること。また、優れた決断のこと。" },
+  { word: "英知", reading: "えいち", meaning: "優れた知恵。深く物事の道理に通じる才知。" },
+  { word: "会得", reading: "えとく", meaning: "物事の意味、本質などを理解し悟ること。" },
+  { word: "沿革", reading: "えんかく", meaning: "物事の移り変わり。" },
+  { word: "婉曲", reading: "えんきょく", meaning: "言い回しが穏やかで、角が立たないさま。" },
+  { word: "横柄", reading: "おうへい", meaning: "他に対して偉そうな態度をとるさま。" },
+  { word: "押し並べて", reading: "おしなべて", meaning: "全体にわたって。" },
+  { word: "邂逅", reading: "かいこう", meaning: "思いがけなく出会うこと。偶然の出会い。" },
+  { word: "回視", reading: "かいし", meaning: "過去を振り返ってみること。" },
+  { word: "懐柔", reading: "かいじゅう", meaning: "うまく手なずけ、自分の思い通りにことを運ぶこと。" },
+  { word: "瓦解", reading: "がかい", meaning: "秩序のあるものや組織が壊れてその機能を失うこと。" },
+  { word: "佳境", reading: "かきょう", meaning: "興味を感じさせる場面のこと。" },
+  { word: "角逐", reading: "かくちく", meaning: "互いに競い合うこと。競り合うこと。" },
+  { word: "呵責", reading: "かしゃく", meaning: "厳しくとがめて叱ること。責め苦しめること。" },
+  { word: "闊達", reading: "かったつ", meaning: "心が大きく、小さな物事にこだわらないこと。" },
+  { word: "寡聞", reading: "かぶん", meaning: "物事を見聞きすることが少なく、見識に乏しいさま。" },
+  { word: "甘受", reading: "かんじゅ", meaning: "やむを得ないものとしてあまんじて受け入れること。" },
+  { word: "奸知", reading: "かんち", meaning: "悪賢い知恵。悪知恵。" },
+  { word: "看破", reading: "かんぱ", meaning: "見破ること。物事の真相や裏面を見抜くこと。" },
+  { word: "気鋭", reading: "きえい", meaning: "気力があって、意気込みが鋭いこと。" },
+  { word: "奇策", reading: "きさく", meaning: "人の予想もしない奇抜な手段や方法のこと。" },
+  { word: "偽作", reading: "ぎさく", meaning: "本物に似せて作ること。" },
+  { word: "気丈", reading: "きじょう", meaning: "心がしっかりしていること。気持ちをしっかりと保つさま。" },
+  { word: "機知", reading: "きち", meaning: "その場に応じて、とっさに適切な応対や発言ができるような鋭い才知。" },
+  { word: "拮抗", reading: "きっこう", meaning: "勢力などがほぼ同等のもの同士が、互いに張り合って優劣のないこと。" },
+  { word: "義憤", reading: "ぎふん", meaning: "道義に外れたこと、不公正なことに対する憤り。" },
+  { word: "詭弁", reading: "きべん", meaning: "道理に合わないことを強引に正当化しようとする弁論。こじつけ。" },
+  { word: "杞憂", reading: "きゆう", meaning: "心配しないでいいことを心配すること。とりこし苦労。" },
+  { word: "恭順", reading: "きょうじゅん", meaning: "命令につつしんで従う態度をとること。" },
+  { word: "暁通", reading: "ぎょうつう", meaning: "よく知っていること。精通していること。" },
+  { word: "曲論", reading: "きょくろん", meaning: "道理を曲げて論じること。まちがいを正しいものとする議論。" },
+  { word: "金言", reading: "きんげん", meaning: "手本とすべき内容をもつ、優れた言葉。" },
+  { word: "迎合", reading: "げいごう", meaning: "自分の考えを曲げてでも、他人の気に入るように調子を合わせること。" },
+  { word: "傾注", reading: "けいちゅう", meaning: "精神や力を一つのことに集中すること。" },
+  { word: "言質", reading: "げんち", meaning: "後々証拠になる言葉のこと。" },
+  { word: "校閲", reading: "こうえつ", meaning: "文書や原稿などの誤りや不備な点を調べ、検討し、訂正したり校正したりすること。" },
+  { word: "狡猾", reading: "こうかつ", meaning: "ずる賢いこと。" },
+  { word: "公算", reading: "こうさん", meaning: "あることの起こる確実性の度合い。実現する見込み。" },
+  { word: "伍する", reading: "ごする", meaning: "他と同等の位置に並ぶ。肩を並べる。" },
+  { word: "寿ぐ/言祝ぐ", reading: "ことほぐ", meaning: "喜びやお祝いの言葉を述べる。" },
+  { word: "顧慮", reading: "こりょ", meaning: "あることをしっかり考えに入れて気を配ること。" },
+  { word: "困憊", reading: "こんぱい", meaning: "困って疲れ果てること。" },
+  { word: "猜疑", reading: "さいぎ", meaning: "人の言動を素直に受け取らないで、何かたくらんでいるのではないかと疑うこと。" },
+  { word: "再三", reading: "さいさん", meaning: "ある動作が二度も三度も行われること。" },
+  { word: "債務", reading: "さいむ", meaning: "金銭を借りた者が貸し手に対してその返還をしなければならない義務のこと。" },
+  { word: "席巻", reading: "せっけん", meaning: "対象となる範囲を片端から勢いよく自分のものにしていくさま。" },
+  { word: "刷新", reading: "さっしん", meaning: "悪い部分を改め、全く新しくすること。" },
+  { word: "暫時", reading: "ざんじ", meaning: "しばらくの間。" },
+  { word: "斯界", reading: "しかい", meaning: "その道を専門とする社会のこと。" },
+  { word: "至言", reading: "しげん", meaning: "事物の本質を適切に言い当てている言葉。" },
+  { word: "桎梏", reading: "しっこく", meaning: "人の行動を厳しく制限して、自由を束縛するもの。" },
+  { word: "昵懇", reading: "じっこん", meaning: "親しく打ち解けてつきあうこと。" },
+  { word: "指南", reading: "しなん", meaning: "武術・芸術などを教え示すこと。指導すること。" },
+  { word: "釈然", reading: "しゃくぜん", meaning: "疑いや迷いが解けて、すっきりするさま。" },
+  { word: "酌量", reading: "しゃくりょう", meaning: "事情をくみ取って、処罰・処置などに手ごごろを加えること。" },
+  { word: "殊勝", reading: "しゅしょう", meaning: "とりわけ優れているさま。心がけや行動などが感心なさま。" },
+  { word: "出色", reading: "しゅっしょく", meaning: "他より特に優れていること。際立って見えること。" },
+  { word: "巡幸", reading: "じゅんこう", meaning: "天皇が各地を見回って歩くこと。" },
+  { word: "消長", reading: "しょうちょう", meaning: "勢いが衰えたり盛んになったりすること。" },
+  { word: "譲渡", reading: "じょうと", meaning: "権利・財産、法律上の地位などを他人に譲り渡すこと。" },
+  { word: "焦眉", reading: "しょうび", meaning: "危険が差し迫っていること。差し迫った状況にあること。" },
+  { word: "譲歩", reading: "じょうほ", meaning: "自分の意見や主張を抑えて、相手の意向に従ったり妥協したりすること。" },
+  { word: "進言", reading: "しんげん", meaning: "目上の人に対して意見を申し述べること。" },
+  { word: "進取", reading: "しんしゅ", meaning: "自ら進んで物事に取り組むこと。" },
+  { word: "進捗", reading: "しんちょく", meaning: "物事がはかどること。進み具合。" },
+  { word: "心痛", reading: "しんつう", meaning: "心配して深く思い苦しむこと。心を痛めること。" },
+  { word: "垂涎", reading: "すいぜん", meaning: "あるものを手に入れたいと熱望すること。食べたくてよだれを垂らすこと。" },
+  { word: "崇高", reading: "すうこう", meaning: "気高く尊いさま。" },
+  { word: "枢軸", reading: "すうじく", meaning: "物事の中心となる部分。" },
+  { word: "趨勢", reading: "すうせい", meaning: "ある方向へと動く勢い。社会などの、全体の流れ。" },
+  { word: "脆弱", reading: "ぜいじゃく", meaning: "もろくて弱いこと。また、そのさま。" },
+  { word: "折衷", reading: "せっちゅう", meaning: "いくつかの異なった考え方のよいところをとり合わせて、一つにまとめ上げること。" },
+  { word: "僭越", reading: "せんえつ", meaning: "自分の地位や立場を超えて、出過ぎたことをすること。" },
+  { word: "漸次", reading: "ぜんじ", meaning: "次第に。だんだん。" },
+  { word: "漸進", reading: "ぜんしん", meaning: "順を追ってだんだんに進むこと。" },
+  { word: "ぞんざい", reading: "ぞんざい", meaning: "いいかげんに物事をするさま。投げやり。" },
+  { word: "尊大", reading: "そんだい", meaning: "いばって、他人を見下すような態度をとること。" },
+  { word: "忖度", reading: "そんたく", meaning: "他人の心情を推し量ること。" },
+  { word: "泰然", reading: "たいぜん", meaning: "落ち着いていて物事に驚かないさま。" },
+  { word: "蛇足", reading: "だそく", meaning: "付け加える必要のないもの。" },
+  { word: "たゆたう", reading: "たゆたう", meaning: "ゆらゆらと揺れ動いて定まらないこと。また、気持ちが定まらずためらうこと。" },
+  { word: "弾劾", reading: "だんがい", meaning: "犯罪や不正をはっきりさせて、責任をとるように求めること。" },
+  { word: "断腸", reading: "だんちょう", meaning: "はらわたがちぎれるほど、非常に悲しいこと。" },
+  { word: "耽読", reading: "たんどく", meaning: "読みふけること。夢中になって読むこと。" },
+  { word: "胆勇", reading: "たんゆう", meaning: "ものに動じない勇気があること。" },
+  { word: "鳥瞰", reading: "ちょうかん", meaning: "高いところから広い範囲を見下ろすこと。また、全体を大きく見渡すこと。" },
+  { word: "跳梁", reading: "ちょうりょう", meaning: "はねまわること。好ましくないものがのさばりはびこること。" },
+  { word: "直観", reading: "ちょっかん", meaning: "哲学で、推理などの論理的判断によらず、対象を直接に捉えること。" },
+  { word: "逓減", reading: "ていげん", meaning: "数量が次第に減ること。また、減らすこと。" },
+  { word: "締約", reading: "ていやく", meaning: "条約や契約を結ぶこと。" },
+  { word: "伝播", reading: "でんぱ", meaning: "伝わり広まること。広く伝わること。" },
+  { word: "透徹", reading: "とうてつ", meaning: "澄みきっていること。また、筋道がはっきりと通っていること。" },
+  { word: "煩悶", reading: "はんもん", meaning: "いろいろと悩み苦しむこと。" },
+  { word: "卑近", reading: "ひきん", meaning: "身近でありふれていること。高尚でなくわかりやすいこと。" },
+  { word: "比肩", reading: "ひけん", meaning: "肩を並べること。同等であること。" },
+  { word: "罷免", reading: "ひめん", meaning: "職務をやめさせること。" },
+  { word: "謬見", reading: "びゅうけん", meaning: "間違った考えや見解。" },
+  { word: "披瀝", reading: "ひれき", meaning: "心の中を包み隠さずに打ち明けること。" },
+  { word: "吹聴", reading: "ふいちょう", meaning: "多くの人に言い広めること。" },
+  { word: "敷延", reading: "ふえん", meaning: "おしひろげること。" },
+  { word: "符合", reading: "ふごう", meaning: "二つ以上の事柄が、ぴったりと照合・対応すること。" },
+  { word: "腐心", reading: "ふしん", meaning: "心を悩ますこと。ひどく心を使うこと。" },
+  { word: "不憫", reading: "ふびん", meaning: "かわいそうなこと。憐れむべきこと。" },
+  { word: "粉飾", reading: "ふんしょく", meaning: "飾りつくろうこと。うわべを取り繕って立派に見せかけること。" },
+  { word: "偏屈", reading: "へんくつ", meaning: "かたくなで、素直でないこと。ひねくれていること。" },
+  { word: "躍如", reading: "やくじょ", meaning: "いきいきとしていて、目の前に見えるさま。" },
+  { word: "雄飛", reading: "ゆうひ", meaning: "大きな志を抱いて盛んに活動すること。" },
+  { word: "流布", reading: "るふ", meaning: "世に広まること。広く世間に行き渡ること。" },
+  { word: "励行", reading: "れいこう", meaning: "決めたこと、決められたことをその通りに実行すること。" },
+  { word: "憐憫", reading: "れんびん", meaning: "かわいそうに思うこと。憐れむこと。" },
+  { word: "老成", reading: "ろうせい", meaning: "歳をとり経験を積んで、熟達していること。" },
+  { word: "狼狽", reading: "ろうばい", meaning: "不意の出来事などにあわててうろたえること。" }
+];
+
+const PART2_WORDS = [
+{ word: "射倖", reading: "しゃこう", meaning: "偶然の利益や成功を得ようとすること" },
+  { word: "冗漫", reading: "じょうまん", meaning: "表現が無駄に長くしまりがないこと" },
+  { word: "喚呼", reading: "かんこ", meaning: "大声で呼ぶこと" },
+  { word: "忌避", reading: "きひ", meaning: "嫌って避けること" },
+  { word: "嫌厭", reading: "けんえん", meaning: "欲しくないさま、したくないさま" },
+  { word: "輻輳", reading: "ふくそう", meaning: "一つの場所に集中し混雑すること" },
+  { word: "確執", reading: "かくしつ", meaning: "互いに自分の意見を譲らないこと" },
+  { word: "朦朧", reading: "もうろう", meaning: "意識や物の形がぼんやりしているさま" },
+  { word: "酩酊", reading: "めいてい", meaning: "ひどく酔うこと" },
+  { word: "領袖", reading: "りょうしゅう", meaning: "集団の長" },
+  { word: "邂逅", reading: "かいこう", meaning: "思いがけなく出会うこと" },
+  { word: "辛酸", reading: "しんさん", meaning: "苦しくてつらい思い" },
+  { word: "排反", reading: "はいはん", meaning: "同時に起こらないこと" },
+  { word: "慟哭", reading: "どうこく", meaning: "悲しみで声をあげて激しく泣くこと" },
+  { word: "齟齬", reading: "そご", meaning: "物事が食い違って意図した通りに進まないこと" },
+  { word: "遺憾", reading: "いかん", meaning: "残念" },
+  { word: "跳梁", reading: "ちょうりょう", meaning: "好ましくないものがのさばること" },
+  { word: "逐次", reading: "ちくじ", meaning: "順を追って次々に" },
+  { word: "矜持", reading: "きょうじ", meaning: "自分の能力を優れたものとして誇る気持ち、自負" },
+  { word: "猜疑", reading: "さいぎ", meaning: "人の言葉を素直に受けず裏があるのではないかと疑うこと" },
+  { word: "絶対 ⇔ 相対", reading: "ぜったい ⇔ そうたい", meaning: "対義語の関係にある語。" },
+  { word: "汎用 ⇔ 凡庸", reading: "はんよう ⇔ ぼんよう", meaning: "対義語の関係。凡庸: 平凡でとりえのないこと" },
+  { word: "贖う", reading: "あがなう", meaning: "買い求める。罪ほろぼしをする。" },
+  { word: "計らう", reading: "はからう", meaning: "考えて適切に処理する。" },
+  { word: "あしらう", reading: "あしらう", meaning: "応答する。いい加減に扱う。" },
+  { word: "賄う", reading: "まかなう", meaning: "間に合わせる。やりくりする。" },
+  { word: "恭順", reading: "きょうじゅん", meaning: "大人しく命令に従うこと" },
+  { word: "具備", reading: "ぐび", meaning: "必要なものが十分に揃っていること" },
+  { word: "愚劣", reading: "ぐれつ", meaning: "馬鹿らしく何の価値もない" },
+  { word: "左遷", reading: "させん", meaning: "低い地位、官職におとすこと" },
+  { word: "勇退", reading: "ゆうたい", meaning: "自ら官職などを退くこと" },
+  { word: "食傷", reading: "しょくしょう", meaning: "繰り返し同じことが続き、飽きて嫌になること" },
+  { word: "見識", reading: "けんしき", meaning: "物事を深く見通し、本質を捉えること" },
+  { word: "蛇蝎", reading: "だかつ", meaning: "ひどく忌み嫌うこと" },
+  { word: "逼迫 / 焦眉", reading: "ひっぱく / しょうび", meaning: "危機が差し迫ること" },
+  { word: "冗長", reading: "じょうちょう", meaning: "必要以上に物事が多い" },
+  { word: "帰納", reading: "きのう", meaning: "複数の個別事例から共通法則を導く思考法" },
+  { word: "演繹", reading: "えんえき", meaning: "一般的なルール・前提から特定の結論を導く論理的推論" },
+  { word: "矮小", reading: "わいしょう", meaning: "せたけが低いこと" },
+  { word: "神妙", reading: "しんみょう", meaning: "おとなしく素直なこと" },
+  { word: "乖離", reading: "かいり", meaning: "離れること" },
+  { word: "弾劾", reading: "だんがい", meaning: "犯罪や不正をはっきりさせて、責任を取るように求めること" },
+  { word: "重畳", reading: "ちょうじょう", meaning: "この上なく満足なこと" },
+  { word: "寛解", reading: "かんかい", meaning: "病気の症状が一時的あるいは継続的に軽減した状態。または見かけ上消滅した状態" },
+  { word: "敷衍", reading: "ふえん", meaning: "例などを上げて趣旨や意図など詳しく説明すること" },
+  { word: "専横", reading: "せんおう", meaning: "好き勝手にすること" },
+  { word: "殊勝", reading: "しゅしょう", meaning: "心掛け、行いなどが、けなげで感心なこと" },
+  { word: "風采", reading: "ふうさい", meaning: "外から見た人の容姿やみなり" },
+  { word: "諸般", reading: "しょはん", meaning: "さまざまなこと" },
+  { word: "逡巡", reading: "しゅんじゅん", meaning: "ためらうこと" },
+  { word: "薫陶", reading: "くんとう", meaning: "優れた人格で人を感化し、育てること" },
+  { word: "概略 ⇔ 委細", reading: "がいりゃく ⇔ いさい", meaning: "対義語の関係にある語。" },
+  { word: "劣後", reading: "れつご", meaning: "他よりも劣っていること" },
+  { word: "威圧 ⇔ 懐柔", reading: "いあつ ⇔ かいじゅう", meaning: "対義語の関係にある語。" },
+  { word: "萎縮 ⇔ 伸長", reading: "いしゅく ⇔ しんちょう", meaning: "対義語の関係にある語。" },
+  { word: "誹謗", reading: "ひぼう", meaning: "悪口を言うこと" },
+  { word: "造詣", reading: "ぞうけい", meaning: "知識や理解が広く深いさま" },
+  { word: "忌憚", reading: "きたん", meaning: "遠慮すること" },
+  { word: "理論 ⇔ 実践", reading: "りろん ⇔ じっせん", meaning: "対義語の関係にある語。" },
+  { word: "精良", reading: "せいりょう", meaning: "きわめて優良であること" },
+  { word: "素人 ⇔ 玄人", reading: "しろうと ⇔ くろうと", meaning: "対義語の関係にある語。" },
+  { word: "専門家 ⇔ 門外漢", reading: "せんもんか ⇔ もんがいかん", meaning: "対義語の関係にある語。" },
+  { word: "排斥", reading: "はいせき", meaning: "好ましくないものを退けること" },
+  { word: "大度", reading: "たいど", meaning: "度量が大きいこと" },
+  { word: "稚拙", reading: "ちせつ", meaning: "技術などが幼稚で未熟であること" },
+  { word: "市井", reading: "しせい", meaning: "人が多く集まる場所" },
+  { word: "緊張 ⇔ 弛緩", reading: "きんちょう ⇔ しかん", meaning: "対義語の関係にある語。" },
+  { word: "楽観 ⇔ 悲観", reading: "らっかん ⇔ ひかん", meaning: "対義語の関係にある語。" },
+  { word: "無謬", reading: "むびゅう", meaning: "理論や判断に間違いないこと" },
+  { word: "愚鈍", reading: "ぐどん", meaning: "頭の働きが悪く、動きが鈍い" },
+  { word: "緩慢", reading: "かんまん", meaning: "処置などが手ぬるいこと" },
+  { word: "自若", reading: "じじゃく", meaning: "大事に際しても動じないこと" },
+  { word: "あさましい", reading: "あさましい", meaning: "ひどく嘆かわしい" },
+  { word: "みだりに", reading: "みだりに", meaning: "無分別に" },
+  { word: "一貫 ⇔ 恣意", reading: "いっかん ⇔ しい", meaning: "対義語の関係。恣意: 自分勝手な考え" },
+  { word: "能弁", reading: "のうべん", meaning: "弁舌が巧みなこと" },
+  { word: "詭弁", reading: "きべん", meaning: "道理に合わないことをいかにももっともらしくこじつける弁論" },
+  { word: "たかをくくる", reading: "たかをくくる", meaning: "みくびること" },
+  { word: "さじをなげる", reading: "さじをなげる", meaning: "途中で諦めること" },
+  { word: "しのぎをけずる", reading: "しのぎをけずる", meaning: "激しく争うこと" },
+  { word: "錯綜", reading: "さくそう", meaning: "複雑に入り組むこと" },
+  { word: "首肯", reading: "しゅこう", meaning: "納得して賛成すること" },
+  { word: "諮問", reading: "しもん", meaning: "有識者または特定の機関の意見を求めること" },
+  { word: "蹉跌(さてつ)する", reading: "蹉跌(さてつ)する", meaning: "失敗すること" },
+  { word: "流言", reading: "りゅうげん", meaning: "根拠のない風説" },
+  { word: "緩慢", reading: "かんまん", meaning: "動作がゆっくりしていること" },
+  { word: "弛緩", reading: "しかん", meaning: "ゆるむこと" },
+  { word: "遷延", reading: "せんえん", meaning: "長引くこと" },
+  { word: "にわかに", reading: "にわかに", meaning: "物事が急に変化する様子" },
+  { word: "あらずもがな", reading: "あらずもがな", meaning: "ない方が良い" },
+  { word: "恣意", reading: "しい", meaning: "思いついたまま" },
+  { word: "招聘", reading: "しょうへい", meaning: "丁重に招くこと" }
+];
+
+const PARTS = {
+  1: { name: 'PART I',  subtitle: '頻出語句 [基礎編]', words: PART1_WORDS },
+  2: { name: 'PART II', subtitle: '頻出語句 [応用編]', words: PART2_WORDS }
+};
+
+const STORAGE_KEY = 'spi_vocab_state_v2';
+
+// ========================================
+// 状態
+// ========================================
+let state = {
+  // status: { 1: { 0: 'learned'|'hard', ... }, 2: { ... } }
+  status: { 1: {}, 2: {} },
+  currentPart: null,
+  mode: 'all',
+  currentIdx: 0,
+  order: []
+};
+
+let isFlipped = false;
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state.status = { 1: {}, 2: {}, ...parsed.status };
+      if (!state.status[1]) state.status[1] = {};
+      if (!state.status[2]) state.status[2] = {};
+    }
+  } catch (e) { console.error(e); }
+
+  // 旧バージョンのデータを引き継ぐ (v1 → v2 migration)
+  try {
+    const oldSaved = localStorage.getItem('spi_vocab_state_v1');
+    if (oldSaved && Object.keys(state.status[1]).length === 0) {
+      const oldParsed = JSON.parse(oldSaved);
+      if (oldParsed.status) {
+        state.status[1] = oldParsed.status;
+        saveState();
+      }
+    }
+  } catch (e) {}
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ status: state.status }));
+  } catch (e) { console.error(e); }
+}
+
+// ========================================
+// Part選択画面
+// ========================================
+function showPartSelect() {
+  document.getElementById('partSelect').classList.remove('hidden');
+  document.getElementById('studyScreen').classList.add('hidden');
+  updatePartSelectUI();
+}
+
+function updatePartSelectUI() {
+  [1, 2].forEach(p => {
+    const total = PARTS[p].words.length;
+    const learned = Object.values(state.status[p] || {}).filter(s => s === 'learned').length;
+    const pct = total > 0 ? (learned / total) * 100 : 0;
+    document.getElementById(`part${p}Total`).textContent = total;
+    document.getElementById(`part${p}Count`).textContent = total + ' 語';
+    document.getElementById(`part${p}Learned`).textContent = learned;
+    document.getElementById(`part${p}Fill`).style.width = pct + '%';
+  });
+
+  const totalAll = PARTS[1].words.length + PARTS[2].words.length;
+  const totalLearned =
+    Object.values(state.status[1] || {}).filter(s => s === 'learned').length +
+    Object.values(state.status[2] || {}).filter(s => s === 'learned').length;
+  const totalHard =
+    Object.values(state.status[1] || {}).filter(s => s === 'hard').length +
+    Object.values(state.status[2] || {}).filter(s => s === 'hard').length;
+  document.getElementById('totalAll').textContent = totalAll;
+  document.getElementById('totalLearned').textContent = totalLearned;
+  document.getElementById('totalHard').textContent = totalHard;
+}
+
+// ========================================
+// 学習画面
+// ========================================
+function startStudy(partNum) {
+  state.currentPart = partNum;
+  state.mode = 'all';
+  state.currentIdx = 0;
+
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-mode="all"]').classList.add('active');
+
+  document.getElementById('studyTitle').textContent = PARTS[partNum].name;
+  document.getElementById('partSelect').classList.add('hidden');
+  document.getElementById('studyScreen').classList.remove('hidden');
+
+  document.getElementById('hardBtn').disabled = false;
+  document.getElementById('learnedBtn').disabled = false;
+
+  buildOrder();
+  renderCard();
+}
+
+function buildOrder() {
+  const partNum = state.currentPart;
+  const words = PARTS[partNum].words;
+  const status = state.status[partNum] || {};
+  let indices = words.map((_, i) => i);
+  if (state.mode === 'hard') {
+    indices = indices.filter(i => status[i] === 'hard');
+  } else if (state.mode === 'unlearned') {
+    indices = indices.filter(i => status[i] !== 'learned');
+  }
+  state.order = indices;
+  state.currentIdx = 0;
+}
+
+function shuffleOrder() {
+  for (let i = state.order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [state.order[i], state.order[j]] = [state.order[j], state.order[i]];
+  }
+  state.currentIdx = 0;
+}
+
+function getCurrentWord() {
+  if (state.currentIdx >= state.order.length) return null;
+  const idx = state.order[state.currentIdx];
+  return { ...PARTS[state.currentPart].words[idx], idx };
+}
+
+const stack = document.getElementById('cardStack');
+const completeScreen = document.getElementById('completeScreen');
+
+function renderCard() {
+  const data = getCurrentWord();
+  if (!data) { showComplete(); return; }
+
+  completeScreen.classList.remove('show');
+  isFlipped = false;
+
+  const status = state.status[state.currentPart][data.idx];
+  let badge = '';
+  if (status === 'learned') {
+    badge = '<div class="card-corner-right"><span class="status-dot learned"></span>覚えた</div>';
+  } else if (status === 'hard') {
+    badge = '<div class="card-corner-right"><span class="status-dot hard"></span>苦手</div>';
+  }
+
+  stack.innerHTML = `
+    <div class="card enter" id="currentCard">
+      <span class="deco-corner deco-tl"></span>
+      <span class="deco-corner deco-tr"></span>
+      <span class="deco-corner deco-bl"></span>
+      <span class="deco-corner deco-br"></span>
+      <div class="card-corner">第 ${state.currentIdx + 1} 語</div>
+      ${badge}
+      <div class="card-content">
+        <div class="word">${data.word}</div>
+        <div class="reading" id="reading">${data.reading}</div>
+        <div class="tap-hint" id="tapHint">タップして意味を表示</div>
+      </div>
+      <div class="meaning-section" id="meaningSection">
+        <div class="meaning-label">意 味</div>
+        <div class="meaning">${data.meaning}</div>
+      </div>
+    </div>
+  `;
+  document.getElementById('currentCard').addEventListener('click', flipCard);
+  updateProgress();
+  updateNextButton();
+}
+
+function flipCard() {
+  if (isFlipped) return;
+  isFlipped = true;
+  document.getElementById('reading').classList.add('show');
+  document.getElementById('meaningSection').classList.add('show');
+  const hint = document.getElementById('tapHint');
+  if (hint) hint.style.display = 'none';
+  updateNextButton();
+}
+
+function updateNextButton() {
+  document.getElementById('nextBtn').disabled = !isFlipped;
+}
+
+function nextCard(direction = 'right') {
+  if (!isFlipped) return;
+  const card = document.getElementById('currentCard');
+  if (card) card.classList.add(direction === 'left' ? 'exit-left' : 'exit-right');
+  setTimeout(() => {
+    state.currentIdx++;
+    renderCard();
+  }, 300);
+}
+
+function markCurrent(status) {
+  const data = getCurrentWord();
+  if (!data) return;
+  state.status[state.currentPart][data.idx] = status;
+  saveState();
+
+  const oldBadge = document.querySelector('.card-corner-right');
+  if (oldBadge) oldBadge.remove();
+  const card = document.getElementById('currentCard');
+  if (card) {
+    const newBadge = document.createElement('div');
+    newBadge.className = 'card-corner-right';
+    newBadge.innerHTML = status === 'learned'
+      ? '<span class="status-dot learned"></span>覚えた'
+      : '<span class="status-dot hard"></span>苦手';
+    card.appendChild(newBadge);
+  }
+  updateProgress();
+  if (!isFlipped) flipCard();
+  setTimeout(() => nextCard(status === 'hard' ? 'left' : 'right'), 250);
+}
+
+function updateProgress() {
+  const total = state.order.length;
+  const current = Math.min(state.currentIdx + 1, total);
+  const status = state.status[state.currentPart] || {};
+  const learned = Object.values(status).filter(s => s === 'learned').length;
+  const hard = Object.values(status).filter(s => s === 'hard').length;
+  document.getElementById('currentNum').textContent = total > 0 ? current : 0;
+  document.getElementById('totalNum').textContent = total;
+  document.getElementById('learnedNum').textContent = learned;
+  document.getElementById('hardNum').textContent = hard;
+  document.getElementById('progressFill').style.width = (total > 0 ? (state.currentIdx / total) * 100 : 0) + '%';
+}
+
+function showComplete() {
+  stack.innerHTML = '';
+  const status = state.status[state.currentPart] || {};
+  const learned = Object.values(status).filter(s => s === 'learned').length;
+  const hard = Object.values(status).filter(s => s === 'hard').length;
+  document.getElementById('finalLearned').textContent = learned;
+  document.getElementById('finalHard').textContent = hard;
+  const reviewBtn = document.getElementById('reviewHardBtn');
+  reviewBtn.disabled = hard === 0;
+  reviewBtn.style.opacity = hard === 0 ? '0.4' : '1';
+  if (state.order.length === 0) {
+    completeScreen.querySelector('.complete-title').textContent = '対象なし';
+    completeScreen.querySelector('.complete-subtitle').innerHTML = 'このモードに該当する語句がありません';
+  } else {
+    completeScreen.querySelector('.complete-title').textContent = '完了';
+    completeScreen.querySelector('.complete-subtitle').innerHTML = 'お疲れさまでした<br>本日の学習を達成しました';
+  }
+  completeScreen.classList.add('show');
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('currentNum').textContent = state.order.length;
+  document.getElementById('nextBtn').disabled = true;
+  document.getElementById('hardBtn').disabled = true;
+  document.getElementById('learnedBtn').disabled = true;
+}
+
+// ========================================
+// イベント
+// ========================================
+document.querySelectorAll('.part-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const partNum = parseInt(card.dataset.part);
+    startStudy(partNum);
+  });
+});
+
+document.getElementById('backBtn').addEventListener('click', showPartSelect);
+document.getElementById('backToSelectBtn').addEventListener('click', showPartSelect);
+
+document.getElementById('nextBtn').addEventListener('click', () => nextCard('right'));
+document.getElementById('hardBtn').addEventListener('click', () => markCurrent('hard'));
+document.getElementById('learnedBtn').addEventListener('click', () => markCurrent('learned'));
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.mode = btn.dataset.mode;
+    document.getElementById('hardBtn').disabled = false;
+    document.getElementById('learnedBtn').disabled = false;
+    buildOrder();
+    renderCard();
+  });
+});
+
+// メニュー
+const menuOverlay = document.getElementById('menuOverlay');
+document.getElementById('menuBtn').addEventListener('click', () => menuOverlay.classList.add('show'));
+document.getElementById('menuCloseBtn').addEventListener('click', () => menuOverlay.classList.remove('show'));
+menuOverlay.addEventListener('click', (e) => { if (e.target === menuOverlay) menuOverlay.classList.remove('show'); });
+
+document.getElementById('shuffleItem').addEventListener('click', () => {
+  buildOrder(); shuffleOrder();
+  document.getElementById('hardBtn').disabled = false;
+  document.getElementById('learnedBtn').disabled = false;
+  renderCard();
+  menuOverlay.classList.remove('show');
+});
+
+document.getElementById('resetProgressItem').addEventListener('click', () => {
+  if (confirm('この単元の学習位置をリセットしますか?
+(覚えた/苦手の記録は残ります)')) {
+    state.currentIdx = 0;
+    document.getElementById('hardBtn').disabled = false;
+    document.getElementById('learnedBtn').disabled = false;
+    buildOrder(); renderCard();
+  }
+  menuOverlay.classList.remove('show');
+});
+
+document.getElementById('resetPartItem').addEventListener('click', () => {
+  if (confirm('この単元の覚えた/苦手の記録をすべてリセットしますか?')) {
+    state.status[state.currentPart] = {};
+    state.currentIdx = 0;
+    saveState();
+    document.getElementById('hardBtn').disabled = false;
+    document.getElementById('learnedBtn').disabled = false;
+    buildOrder(); renderCard();
+  }
+  menuOverlay.classList.remove('show');
+});
+
+document.getElementById('resetAllItem').addEventListener('click', () => {
+  if (confirm('全単元の記録をすべてリセットしますか?
+この操作は取り消せません。')) {
+    state.status = { 1: {}, 2: {} };
+    state.currentIdx = 0;
+    saveState();
+    showPartSelect();
+  }
+  menuOverlay.classList.remove('show');
+});
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  state.currentIdx = 0;
+  document.getElementById('hardBtn').disabled = false;
+  document.getElementById('learnedBtn').disabled = false;
+  buildOrder(); renderCard();
+});
+
+document.getElementById('reviewHardBtn').addEventListener('click', () => {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-mode="hard"]').classList.add('active');
+  state.mode = 'hard';
+  document.getElementById('hardBtn').disabled = false;
+  document.getElementById('learnedBtn').disabled = false;
+  buildOrder(); renderCard();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (document.getElementById('studyScreen').classList.contains('hidden')) return;
+  if (e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault();
+    if (!isFlipped) flipCard(); else nextCard('right');
+  } else if (e.key === '1' || e.key === 'ArrowLeft') {
+    if (isFlipped) markCurrent('hard');
+  } else if (e.key === '2' || e.key === 'ArrowRight') {
+    if (isFlipped) markCurrent('learned');
+  } else if (e.key === 'Escape') {
+    showPartSelect();
+  }
+});
+
+// ========================================
+// 初期化
+// ========================================
+loadState();
+showPartSelect();
+</script>
+</body>
+</html>
